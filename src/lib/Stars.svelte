@@ -1,41 +1,39 @@
 <script context='module' lang='ts'>
-	AFRAME.registerComponent('stars', {
-		init () {
-			this.count = 10_000
-			this.vertices = new Float32Array(this.count * 3)
 
-			let i = 0
-			while (i < this.count * 3) {
-				this.vertices[i + 0] = Math.random() * 10 - 5
-				this.vertices[i + 1] = Math.random() * 10 - 5
-				i += 3
-			}
+import { FAR, WHITE } from './constants'
+import { register, randPointInCircle, createPoints, random, setMesh, needsUpdate } from './util'
 
-			const geometry = new THREE.BufferGeometry()
-			const material = new THREE.PointsMaterial()
-			
-			this.positionAttr = new THREE.BufferAttribute(this.vertices, 3)
-			geometry.setAttribute('position', this.positionAttr)
+const COUNT = 1000
+const vertices = new Float32Array(COUNT * 3)
 
-			this.el.setObject3D('mesh', new THREE.Points(geometry, material))
-		},
+let i = 0, j = 0
+while (i < COUNT * 3) {
+	const [x, y] = randPointInCircle(40)
+	vertices[i + 0] = x
+	vertices[i + 1] = y
+	vertices[i + 2] = random(FAR * 2) - FAR
+	i += 3
+}
 
-		update () {
-			let i = 0
-			let z = 0
+const [points, positionAttr] = createPoints(COUNT, 1, 'circle1', WHITE, vertices)
 
-			while (i < this.count * 3) {
-				z = this.positionAttr.getZ(i) + (i / 10)
+register('stars', {
+	init () {
+		setMesh(this, points)
+	},
 
-				if (z > 50) z = -50
-
-				this.positionAttr.setZ(i, z)
-
-				i += 3
-			}
-			this.positionAttr.needsUpdate = true
+	tick () {
+		i = 0
+		while (i < COUNT) {
+			j = positionAttr.getZ(i) + (i / 1000)
+			if (j > FAR) j = -j
+			positionAttr.setZ(i, j)
+			i += 1
 		}
-	})
-</script>
 
+		needsUpdate(positionAttr)
+	}
+})
+
+</script>
 <a-entity stars />
