@@ -1,7 +1,7 @@
 <script lang='ts'>
 
 import Bullets from './Bullets.svelte'
-import { EVENT_FIRE, EVENT_FIRE_END, SHIP_MTL, SHIP_OBJ, CONTROLS, EVENT_MODEL_LOADED, ID_PLAYER } from './constants'
+import { EVENT_FIRE, EVENT_FIRE_END, SHIP_MTL, SHIP_OBJ, CONTROLS, EVENT_MODEL_LOADED } from './constants'
 import { getMesh, register, emit, addOBB, updateOBB } from './util'
 
 register('controls', {
@@ -47,6 +47,6 @@ register('ship', {
 })
 
 </script>
-<a-entity controls><a-obj-model ship id={ID_PLAYER} src='#{SHIP_OBJ}' mtl='#{SHIP_MTL}' /></a-entity>
+<a-entity controls><a-obj-model ship src='#{SHIP_OBJ}' mtl='#{SHIP_MTL}' /></a-entity>
 <a-entity hand-controls='hand:right;' />
 <Bullets />

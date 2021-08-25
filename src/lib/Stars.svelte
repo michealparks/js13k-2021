@@ -1,8 +1,9 @@
 <script context='module' lang='ts'>
 
-import { FAR, WHITE } from './constants'
+import { FAR, SPRITE_CIRCLE, WHITE } from './constants'
 import { register, randPointInCircle, createPoints, random, setMesh, needsUpdate } from './util'
 
+const SPRITE_SIZE = 0.3
 const COUNT = 1000
 const vertices = new Float32Array(COUNT * 3)
 
@@ -15,9 +16,10 @@ while (i < COUNT * 3) {
 	i += 3
 }
 
-const [points, positionAttr] = createPoints(COUNT, 1, 'circle1', WHITE, vertices)
+const [points, positionAttr] = createPoints(COUNT, SPRITE_SIZE, SPRITE_CIRCLE, WHITE, vertices)
 
 register('stars', {
+
 	init () {
 		setMesh(this, points)
 	},
@@ -25,7 +27,7 @@ register('stars', {
 	tick () {
 		i = 0
 		while (i < COUNT) {
-			j = positionAttr.getZ(i) + (i / 1000)
+			j = positionAttr.getZ(i) + ((i % 200) / 1000)
 			if (j > FAR) j = -j
 			positionAttr.setZ(i, j)
 			i += 1
@@ -33,6 +35,7 @@ register('stars', {
 
 		needsUpdate(positionAttr)
 	}
+
 })
 
 </script>

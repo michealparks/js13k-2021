@@ -21,6 +21,8 @@ export const PURPLE = '#ba68c8'
 
 export const FAR = 150
 
-export const ID_SCENE = 'scene'
-export const ID_PLAYER = 'p1'
-export const ID_BULLETS = 'bullets'
+export const PLAYER = 'player'
+export const SCENE = 'scene'
+export const BULLETS = 'bullets'
+
+export const SPRITE_CIRCLE = 'circle'

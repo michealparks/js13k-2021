@@ -1,19 +1,21 @@
 <script context='module' lang='ts'>
 
-import { EVENT_FIRE, EVENT_FIRE_END, ID_BULLETS, PURPLE } from './constants'
+import { EVENT_FIRE, EVENT_FIRE_END, FAR, BULLETS, PURPLE, SPRITE_CIRCLE } from './constants'
 import { createPoints, float32Array, needsUpdate, on, register, setMesh, setXYZ } from './util'
 
+const SPRITE_SIZE = 0.1
 const COUNT = 500
 const SPEED = 0.1
 const vector = new THREE.Vector3()
-const [points, positionAttr] = createPoints(COUNT, 0.5, 'star1', PURPLE)
+const [points, positionAttr] = createPoints(COUNT, SPRITE_SIZE, SPRITE_CIRCLE, PURPLE)
 const velocities = float32Array(COUNT * 3)
+const awake = new Set<number>()
 
 let index = 0
 let i = 0, j = 0, x = 0, y = 0, z = 0
 let source = null
 
-register('bullets', {
+register(BULLETS, {
   init () {
     setMesh(this, points)
 
@@ -24,14 +26,19 @@ register('bullets', {
     on(EVENT_FIRE_END, () => {
       source = null
     })
+
+    while (i < COUNT) {
+      setXYZ(positionAttr, i, FAR, FAR, FAR)
+      i += 1
+    }
   },
 
-  tick (delta: number) {
+  tick () {
     if (source) {
       vector.set(0, 0, -1).applyQuaternion(source.quaternion).normalize()
 
       i = index * 3
-      velocities[i + 0] = vector.x * SPEED
+      velocities[i] = vector.x * SPEED
       velocities[i + 1] = vector.y * SPEED
       velocities[i + 2] = vector.z * SPEED
 
@@ -40,9 +47,12 @@ register('bullets', {
 
       index += 1
       if (index === COUNT) index = 0
+
+      awake.add(i)
     }
 
-    for (i = 0, j = 0; i < COUNT; i += 1, j += 3) {
+    for (j of awake) {
+      i = j / 3
       x = velocities[j]
       y = velocities[j + 1]
       z = velocities[j + 2]
@@ -63,7 +73,16 @@ register('bullets', {
 
   getPositions () {
     return positionAttr.array
-  }
+  },
+
+  getAwake () {
+    return awake
+  },
+
+  removeAwake (i: number) {
+    awake.delete(i)
+    setXYZ(positionAttr, i / 3, FAR, FAR, FAR)
+  },
 })
 </script>
-<a-entity id={ID_BULLETS} bullets />
+<a-entity bullets />

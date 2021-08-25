@@ -1,3 +1,5 @@
 import App from './App.svelte'
 
-export default new App({ target: window.app })
+export default new App({
+  target: document.querySelector('#app')
+})

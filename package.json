@@ -14,6 +14,7 @@
     "@types/aframe": "^1.0.5",
     "@types/three": "^0.131.0",
     "aframe": "^1.2.0",
+    "gh-pages": "^3.2.3",
     "svelte": "^3.42.2",
     "svelte-check": "^2.2.4",
     "svelte-preprocess": "^4.8.0",

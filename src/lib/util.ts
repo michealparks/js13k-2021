@@ -1,8 +1,10 @@
-import { ASSETS, ID_SCENE, MESH } from './constants'
+import { ASSETS, MESH, SCENE } from './constants'
+import type { Entity } from 'aframe'
 
 const textureLoader = new THREE.TextureLoader()
 
 export const random = (n = 1) => Math.random() * n
+export const abs = (n: number) => Math.abs(n)
 
 export const randPointInCircle = (R: number) => {
   const a = random(2 * Math.PI)
@@ -43,11 +45,14 @@ export const register = (name: string, opts: any) =>
 export const emit = (obj, ...args) =>
   obj.el.emit(...args)
 
-export const query = (selector: string): HTMLElement =>
-  document.getElementById(selector)
+export const queryAttr = (attr: string): Entity =>
+  document.querySelector(`[${attr}]`)
 
-export const on = (event: string, fn: any, root = ID_SCENE): void =>
-  query(root).addEventListener(event, fn)
+export const on = (event: string, fn: any, root = SCENE): void =>
+  queryAttr(root).addEventListener(event, fn)
+
+export const ready = (fn: any) =>
+  addEventListener('load', fn)
 
 export const getMesh = (obj): THREE.Mesh =>
   obj.el ? obj.el.getObject3D(MESH) : obj.getObject3D(MESH)
@@ -65,15 +70,15 @@ export const needsUpdate = (prop) => {
 export const float32Array = (arg) =>
   new Float32Array(arg)
 
-export const OBB = () =>
+export const createOBB = () =>
   new THREE.OBB()
 
 export const addOBB = (mesh: THREE.Mesh) => {
   mesh.geometry.computeBoundingBox()
-  mesh.geometry.userData.obb = OBB().fromBox3(
+  mesh.geometry.userData.obb = createOBB().fromBox3(
     mesh.geometry.boundingBox as THREE.Box3
   )
-  const obb = OBB()
+  const obb = createOBB()
   mesh.userData.obb = obb
   return obb
 }

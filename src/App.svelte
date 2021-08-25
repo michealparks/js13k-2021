@@ -5,14 +5,14 @@ import Controls from './lib/Controls.svelte'
 import EnterVr from './lib/EnterVR.svelte'
 import Stars from './lib/Stars.svelte'
 import Debris from './lib/Debris.svelte'
-import { FAR, ID_SCENE } from './lib/constants'
+import { FAR } from './lib/constants'
 
 const renderer = 'antialias:true;highRefreshRate:true;foveationLevel:3;alpha:false;'
 const ui = 'enterVRButton:#enter;'
 const fog = `type:linear;color:#000;far:${FAR};near:0`
 
 </script>
-<a-scene id={ID_SCENE} stats inspector renderer='{renderer}' vr-mode-ui='{ui}' fog='{fog}'>
+<a-scene scene stats inspector renderer='{renderer}' vr-mode-ui='{ui}' fog='{fog}'>
   <Assets />
   <Controls />
   <Stars />
