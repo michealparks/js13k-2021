@@ -1,16 +1,17 @@
 <script lang='ts'>
 
 import Bullets from './Bullets.svelte'
-import { EVENT_FIRE, EVENT_FIRE_END, SHIP_MTL, SHIP_OBJ, CONTROLS, EVENT_MODEL_LOADED } from './constants'
-import { getMesh, register, emit, addOBB, updateOBB } from './util'
+import Ship from './Ship.svelte'
+import { EVENT_FIRE, EVENT_FIRE_END, CONTROLS } from './constants'
+import { register, emit } from './util'
 
 register('controls', {
 	events: {
-		triggerdown (e) {
+		triggerdown (e: Event) {
 			emit(this, EVENT_FIRE, e)
 		},
-		triggerup () {
-			emit(this, EVENT_FIRE_END)
+		triggerup (e: Event) {
+			emit(this, EVENT_FIRE_END, e)
 		}
 	},
 
@@ -33,20 +34,7 @@ register('controls', {
 	}
 })
 
-register('ship', {
-	events: {
-		[EVENT_MODEL_LOADED] () {
-			this.mesh = getMesh(this).children[0] as THREE.Mesh
-			addOBB(this.mesh)
-		}
-	},
-
-	tick () {
-		if (this.mesh) updateOBB(this.mesh)
-	}
-})
-
 </script>
-<a-entity controls><a-obj-model ship src='#{SHIP_OBJ}' mtl='#{SHIP_MTL}' /></a-entity>
-<a-entity hand-controls='hand:right;' />
+<a-entity controls='hand:left;'><Ship player /></a-entity>
+<!-- <a-entity controls='hand:right'><Ship player /></a-entity> -->
 <Bullets />

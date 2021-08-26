@@ -1,11 +1,11 @@
 <script context='module' lang='ts'>
 
 import { FAR, SPRITE_CIRCLE, WHITE } from './constants'
-import { register, randPointInCircle, createPoints, random, setMesh, needsUpdate } from './util'
+import { register, randPointInCircle, createPoints, random, setMesh, needsUpdate, float32Array } from './util'
 
 const SPRITE_SIZE = 0.3
 const COUNT = 1000
-const vertices = new Float32Array(COUNT * 3)
+const vertices = float32Array(COUNT * 3)
 
 let i = 0, j = 0
 while (i < COUNT * 3) {

@@ -1,10 +1,13 @@
 import { ASSETS, MESH, SCENE } from './constants'
-import type { Entity } from 'aframe'
+import type { Entity, Component } from 'aframe'
 
 const textureLoader = new THREE.TextureLoader()
 
-export const random = (n = 1) => Math.random() * n
-export const abs = (n: number) => Math.abs(n)
+export const random = (n = 1): number =>
+  Math.random() * n
+
+export const abs = (n: number): number =>
+  Math.abs(n)
 
 export const randPointInCircle = (R: number) => {
   const a = random(2 * Math.PI)
@@ -15,10 +18,10 @@ export const randPointInCircle = (R: number) => {
 }
 
 export const createPoints = (
-  count,
-  size,
-  tex,
-  color,
+  count: number,
+  size: number,
+  tex: string,
+  color: string,
   vertices = new Float32Array(count * 3),
 ): [THREE.Points, THREE.BufferAttribute] => {
   const geometry = new THREE.BufferGeometry()
@@ -36,14 +39,17 @@ export const createPoints = (
 
   const points = new THREE.Points(geometry, material)
   points.frustumCulled = false
+
   return [points, positionAttr]
 }
 
-export const register = (name: string, opts: any) =>
+export const register = (name: string, opts: any): void => {
   AFRAME.registerComponent(name, opts)
+}
 
-export const emit = (obj, ...args) =>
-  obj.el.emit(...args)
+export const emit = ({ el }: Component, e: string, arg?: unknown): void => {
+  el.emit(e, arg)
+}
 
 export const queryAttr = (attr: string): Entity =>
   document.querySelector(`[${attr}]`)
@@ -57,33 +63,41 @@ export const ready = (fn: any) =>
 export const getMesh = (obj): THREE.Mesh =>
   obj.el ? obj.el.getObject3D(MESH) : obj.getObject3D(MESH)
 
-export const setMesh = (obj, mesh: THREE.Object3D) =>
-  obj.el.setObject3D(MESH, mesh)
+export const setMesh = ({ el }: Component, mesh: THREE.Object3D): void => {
+  el.setObject3D(MESH, mesh)
+}
 
-export const setXYZ = (attr: THREE.BufferAttribute, i: number, x: number, y: number, z: number) =>
+export const setXYZ = (attr: THREE.BufferAttribute, i: number, x: number, y: number, z: number): void => {
   attr.setXYZ(i, x, y, z)
+}
 
-export const needsUpdate = (prop) => {
+export const needsUpdate = (prop: THREE.BufferAttribute): void => {
   prop.needsUpdate = true
 }
 
-export const float32Array = (arg) =>
+export const float32Array = (arg: number): Float32Array =>
   new Float32Array(arg)
 
 export const createOBB = () =>
   new THREE.OBB()
 
 export const addOBB = (mesh: THREE.Mesh) => {
-  mesh.geometry.computeBoundingBox()
-  mesh.geometry.userData.obb = createOBB().fromBox3(
-    mesh.geometry.boundingBox as THREE.Box3
+  const { geometry } = mesh
+
+  geometry.computeBoundingBox()
+  geometry.userData.obb = createOBB().fromBox3(
+    geometry.boundingBox as THREE.Box3
   )
+
   const obb = createOBB()
   mesh.userData.obb = obb
+
   return obb
 }
 
 export const updateOBB = (mesh: THREE.Mesh) => {
-  mesh.userData.obb.copy(mesh.geometry.userData.obb)
-  mesh.userData.obb.applyMatrix4(mesh.matrixWorld)
+  const { obb } = mesh.userData
+
+  obb.copy(mesh.geometry.userData.obb)
+  obb.applyMatrix4(mesh.matrixWorld)
 }

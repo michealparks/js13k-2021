@@ -6,6 +6,21 @@ import EnterVr from './lib/EnterVR.svelte'
 import Stars from './lib/Stars.svelte'
 import Debris from './lib/Debris.svelte'
 import { FAR } from './lib/constants'
+import { song } from './lib/song'
+import { initSong, generateSong, createWave } from './lib/player'
+
+initSong(song)
+
+let audio: HTMLAudioElement
+
+const id = setInterval(() => {
+  if (generateSong() >= 1) {
+    audio.src = URL.createObjectURL(new Blob([createWave()], { type: 'audio/wav' }))
+    clearInterval(id)
+  }
+})
+
+onclick = () => audio.play()
 
 const renderer = 'antialias:true;highRefreshRate:true;foveationLevel:3;alpha:false;'
 const ui = 'enterVRButton:#enter;'
@@ -19,3 +34,4 @@ const fog = `type:linear;color:#000;far:${FAR};near:0`
   <Debris />
 </a-scene>
 <EnterVr />
+<audio loop bind:this={audio} />

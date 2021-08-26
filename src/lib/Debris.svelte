@@ -2,6 +2,7 @@
 
 import { abs, queryAttr, ready } from './util'
 
+let playerComponent = null
 let player = null
 let bullets = null
 let camera = null
@@ -11,7 +12,8 @@ ready(() => {
   bullets = queryAttr(BULLETS).components.bullets
 
   on(EVENT_MODEL_LOADED, (e) => {
-    player = getMesh(e.target).children[0]
+    playerComponent = e.target.components.ship
+    player = getMesh(playerComponent).children[0]
   })
 })
 
@@ -62,6 +64,7 @@ register('debris', {
 
     if (player && this.obb.intersectsOBB(player.userData.obb)) {
       resetPosition(position, 2)
+      playerComponent.damage()
     }
 
     if (bullets) {
