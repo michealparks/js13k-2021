@@ -1,7 +1,8 @@
 <script>
-import { ENTER } from './constants'
+import { ENTER, ENTER_CLASSIC } from './constants'
 </script>
 <button id={ENTER} type='button'>Enter VR</button>
+<button id={ENTER_CLASSIC} type='button'>Play</button>
 <style>
   :global(#app) {
     position: absolute;
@@ -12,7 +13,9 @@ import { ENTER } from './constants'
   }
 
   button {
+    cursor: pointer;
     padding: 0.5rem 1rem;
+    margin-top: 1rem;
     border: 1px solid #fff;
     color: #fff;
     background: transparent;

@@ -1,19 +1,18 @@
 <script context='module' lang='ts'>
 
-import { abs, createOBB, float32Array, queryAttr, ready, setMesh } from './util'
+import { abs, float32Array, needsUpdate, queryAttr, randomFloatInRange, ready, setMesh } from './util'
+import { Events } from './constants'
 
 let playerComponent = null
 let player = null
 let bullets = null
-let camera = null
 
 ready(() => {
-  camera = queryAttr('camera').object3D
   bullets = queryAttr(BULLETS).components.bullets
 
-  on(EVENT_MODEL_LOADED, (e) => {
+  on(Events.MODEL_LOADED, (e) => {
     playerComponent = e.target.components.ship
-    player = getMesh(playerComponent).children[0]
+    player = getMesh(playerComponent, 0)
   })
 })
 
@@ -21,114 +20,169 @@ ready(() => {
 
 <script lang='ts'>
 
-import { EVENT_MODEL_LOADED, FAR, BULLETS } from './constants'
-import { getMesh, on, random, randPointInCircle, register } from './util'
+import { FAR, BULLETS } from './constants'
+import { getMesh, on, random, randPointInCircle, register, each } from './util'
 
-const count = 100
+
+const poolSize = 600
+const numDebris = 150
+const numFragments = poolSize - numDebris
+const baseRadius = 0.4
+
+const sphere = new THREE.Sphere()
+const box = new THREE.Box3()
+
 const dummy = new THREE.Object3D()
 const v3 = new THREE.Vector3()
-const v3_2 = new THREE.Vector3()
-const m3 = new THREE.Matrix3()
-const positions = float32Array(count * 3)
-const rotations = float32Array(count * 4)
-const av = float32Array(count * 3)
-const radius = 0.4
-const obb = createOBB()
-const geometry = new THREE.IcosahedronGeometry(radius)
+const positions = float32Array(poolSize * 3)
+const velocities = float32Array(poolSize * 3)
+const rotations = float32Array(poolSize * 3)
+const angularVelocities = float32Array(poolSize * 3)
+const radii = float32Array(poolSize)
+const geometry = new THREE.IcosahedronGeometry(baseRadius)
 const material = new THREE.MeshStandardMaterial({ color: '#FF926B' })
-const mesh = new THREE.InstancedMesh(geometry, material, count)
+const mesh = new THREE.InstancedMesh(geometry, material, poolSize)
 
+let currentFragmentIndex = numDebris
 let playerDead = false
 
-mesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage )
+const setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
+  const stride = i * 3
 
-const each = (fn: (i: number) => void) => {
-  for (const i of Array(count).keys()) fn(i)
-}
+  radii[i] = r
 
-const setPosition = (index: number, z = random(FAR) - (FAR / 2)): void => {
-  const [x, y] = randPointInCircle(2)
-  const scale = random(0.1) + 0.1
-  const stride = index * 3
-
+  dummy.scale.setScalar(r)
   dummy.position.set(x, y, z)
   dummy.updateMatrix()
 
-  // v.setScalar(s)
-  // m.scale(v)
-
-  positions[stride + 0] = x
+  positions[stride] = x
   positions[stride + 1] = y
   positions[stride + 2] = z
+}
 
-  av[stride + 0] = random(0.01)
-  av[stride + 1] = random(0.01)
-  av[stride + 2] = random(0.01)
+const setVelocity = (i: number, vx: number, vy: number, vz: number) => {
+  console.log(i, vx, vy, vz)
+  const stride = i * 3
+  velocities[stride + 0] = vx
+  velocities[stride + 1] = vy
+  velocities[stride + 2] = vz
+
+  angularVelocities[stride + 0] = random(0.01)
+  angularVelocities[stride + 1] = random(0.01)
+  angularVelocities[stride + 2] = random(0.01)
+}
+
+const resetPosition = (index: number): void => {
+  const [x, y] = randPointInCircle(2)
+  setTransform(index, baseRadius + random(1), x, y + 1, -FAR - 5)
+}
+
+const explode = (debrisIndex: number, x: number, y: number, z: number) => {
+  const isFragment = debrisIndex >= numDebris
+
+  if (isFragment) {
+    setTransform(debrisIndex)
+    return
+  }
+
+  resetPosition(debrisIndex)
+  setVelocity(debrisIndex, 0, 0, 0.05 + random(0.1))
+
+  each(10, () => {
+    setTransform(currentFragmentIndex, baseRadius / 1.5, x, y, z)
+    setVelocity(currentFragmentIndex, randomFloatInRange(-0.05, 0.05), randomFloatInRange(-0.05, 0.05), randomFloatInRange(0.05, 0.1))
+
+    currentFragmentIndex += 1
+
+    if (currentFragmentIndex === poolSize - 1) {
+      currentFragmentIndex = numDebris
+    }
+  })
+}
+
+const at = (arr: Float32Array, i: number): [x: number, y: number, z: number] => {
+  return [arr[i], arr[i + 1], arr[i + 2]]
+}
+
+const updateArr = (i: number, arr: Float32Array, updates: Float32Array) => {
+  arr[i + 0] += updates[i + 0]
+  arr[i + 1] += updates[i + 1]
+  arr[i + 2] += updates[i + 2]
+}
+
+const calculateDamage = (debrisIndex: number) => {
+  return debrisIndex > numDebris ? 0.1 : 1
+}
+
+const leakDebris = (i) => {
+  if (i >= numDebris) return
+  setVelocity(i, 0, 0, 0.05 + random(0.1))
+  setTimeout(leakDebris, 300, i + 1)
 }
 
 register('debris', {
 
   init () {
     setMesh(this, mesh)
-    each((i) => {
-      setPosition(i)
-      mesh.setMatrixAt(i, dummy.matrix)
-    })
+    each(poolSize, i => resetPosition(i))
+    leakDebris(0)
   },
 
   tick () {
-    if (!player) return
+    if (!player || !bullets) return
 
-    each((i) => {
-      const stride = i * 3
-      positions[stride + 2] += ((i % 20) * 0.005)
+    box.setFromObject(player)
 
-      rotations[stride] += av[stride]
-      rotations[stride + 1] += av[stride + 1]
-      rotations[stride + 2] += av[stride + 2]
+    each(poolSize, (debrisIndex) => {
+      const stride = debrisIndex * 3
+      updateArr(stride, positions, velocities)
+      updateArr(stride, rotations, angularVelocities)
 
-      dummy.position.set(positions[stride], positions[stride + 1], positions[stride + 2])
+      const r = radii[debrisIndex]
+      const [x, y, z] = at(positions, stride)
+
+      if (z > FAR) {
+        resetPosition(debrisIndex)
+      }
+
+      dummy.scale.setScalar(r)
+      dummy.position.set(x, y, z)
+
       dummy.rotation.x = rotations[stride]
       dummy.rotation.y = rotations[stride + 1]
       dummy.rotation.z = rotations[stride + 2]
       dummy.updateMatrix()
-      mesh.setMatrixAt(i, dummy.matrix)
+      mesh.setMatrixAt(debrisIndex, dummy.matrix)
 
       if (playerDead) {
         return
       }
 
-      v3.set(0, 0, 0)
-      obb.set(v3, v3_2.setScalar(radius), m3)
-      obb.applyMatrix4(dummy.matrix)
+      sphere.set(dummy.position, baseRadius)
 
-      if (obb.intersectsOBB(player.userData.obb)) {
-        setPosition(i, -FAR * 2)
-        playerDead = playerComponent.damage() <= 0
+      if (box.intersectsSphere(sphere)) {
+        explode(debrisIndex, x, y, z)
+        playerDead = playerComponent.damage(calculateDamage(debrisIndex)) <= 0
       }
 
-      if (bullets) {
-        const positions = bullets.getPositions()
-        const awake = bullets.getAwake()
+      const bulletPositions = bullets.getPositions()
 
-        for (const i of awake) {
-          v3.set(positions[i], positions[i + 1], positions[i + 2])
+      for (const awakeIndex of bullets.getAwake()) {
+        v3.set(...at(bulletPositions, awakeIndex * 3))
 
-          if (obb.containsPoint(v3)) {
-            setPosition(i, -FAR * 2)
-            bullets.removeAwake(i)
-          }
+        if (sphere.containsPoint(v3)) {
+          explode(debrisIndex, x, y, z)
+          bullets.removeAwake(awakeIndex)
+        }
 
-          if (abs(v3.x) > FAR && abs(v3.y) > FAR && abs(v3.z) > FAR) {
-            bullets.removeAwake(i)
-          }
+        if (abs(v3.x) > FAR && abs(v3.y) > FAR && abs(v3.z) > FAR) {
+          bullets.removeAwake(awakeIndex)
         }
       }
     })
 
-    mesh.instanceMatrix.needsUpdate = true
-  },
-  
+    needsUpdate(mesh.instanceMatrix)
+  }
 })
 
 </script>

@@ -5,6 +5,9 @@ import fragmentShader from './shaders/point.frag.glsl'
 
 const textureLoader = new THREE.TextureLoader()
 
+export const randomFloatInRange = (min: number, max: number) =>
+  random() * (max - min) + min
+
 export const random = (n = 1): number =>
   Math.random() * n
 
@@ -92,26 +95,6 @@ export const needsUpdate = (prop: THREE.BufferAttribute): void => {
 export const float32Array = (arg: number): Float32Array =>
   new Float32Array(arg)
 
-export const createOBB = (): OBB =>
-  new THREE.OBB()
-
-export const addOBB = (mesh: THREE.Mesh) => {
-  const { geometry } = mesh
-
-  geometry.computeBoundingBox()
-  geometry.userData.obb = createOBB().fromBox3(
-    geometry.boundingBox as THREE.Box3
-  )
-
-  const obb = createOBB()
-  mesh.userData.obb = obb
-
-  return obb
-}
-
-export const updateOBB = (mesh: THREE.Mesh) => {
-  const { obb } = mesh.userData
-
-  obb.copy(mesh.geometry.userData.obb)
-  obb.applyMatrix4(mesh.matrixWorld)
+export const each = (count: number, fn: (i: number) => void) => {
+  for (const i of Array(count).keys()) fn(i)
 }
