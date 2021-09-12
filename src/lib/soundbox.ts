@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil; -*-
+/*
 *
 * Copyright (c) 2011-2013 Marcus Geelnard
 *
@@ -24,9 +24,6 @@
 */
 
 // Some general notes and recommendations:
-//  * This code uses modern ECMAScript features, such as ** instead of
-//    Math.pow(). You may have to modify the code to make it work on older
-//    browsers.
 //  * If you're not using all the functionality (e.g. not all oscillator types,
 //    or certain effects), you can reduce the size of the player routine even
 //    further by deleting the code.
@@ -139,7 +136,6 @@ export let initSong = (song) => {
     // Create work buffer (initially cleared)
     mMixBuf = new Int32Array(mNumWords)
 }
-
 
 //--------------------------------------------------------------------------
 // Public methods
@@ -283,7 +279,10 @@ export let generateSong = () => {
 
 export let createWave = () => {
   // Create WAVE header
-  let headerLen = 44,
+  let idx,
+      y,
+      i = 0,
+      headerLen = 44,
       l1 = headerLen + mNumWords * 2 - 8,
       l2 = l1 - 36,
       wave = new Uint8Array(headerLen + mNumWords * 2);
@@ -296,9 +295,9 @@ export let createWave = () => {
   );
 
   // Append actual wave data
-  for (let i = 0, idx = headerLen; i < mNumWords; ++i) {
+  for (idx = headerLen; i < mNumWords; ++i) {
       // Note: We clamp here
-      let y = mMixBuf[i];
+      y = mMixBuf[i];
       y = y < -32767 ? -32767 : (y > 32767 ? 32767 : y);
       wave[idx++] = y & 255;
       wave[idx++] = (y >> 8) & 255;

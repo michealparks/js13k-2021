@@ -1,4 +1,7 @@
-<button id='enter' type='button'>Enter VR</button>
+<script>
+import { ENTER } from './constants'
+</script>
+<button id={ENTER} type='button'>Enter VR</button>
 <style>
   :global(#app) {
     position: absolute;

@@ -2,10 +2,13 @@
 
 import Bullets from './Bullets.svelte'
 import Ship from './Ship.svelte'
-import { EVENT_FIRE, EVENT_FIRE_END, CONTROLS } from './constants'
+import { EVENT_FIRE, EVENT_FIRE_END, CONTROLS_LIST } from './constants'
 import { register, emit } from './util'
 
-register('controls', {
+let LEFT = 'left'
+let CONTROLS = 'controls'
+
+register(CONTROLS, {
 	events: {
 		triggerdown (e: Event) {
 			emit(this, EVENT_FIRE, e)
@@ -20,14 +23,14 @@ register('controls', {
 		const { el } = this
 		const offset = 90
 
-		for (const attr of CONTROLS) {
-			el.setAttribute(attr, {
+		for (const ctr of CONTROLS_LIST) {
+			el.setAttribute(`${ctr}-${CONTROLS}`, {
 				hand,
 				model: false,
 				orientationOffset: {
 					x: 0,
 					y: 0,
-					z: hand === 'left' ? offset : -offset
+					z: hand === LEFT ? offset : -offset
 				}
 			})
 		}
@@ -35,6 +38,6 @@ register('controls', {
 })
 
 </script>
-<a-entity controls='hand:left;'><Ship player /></a-entity>
+<a-entity controls='hand:{LEFT}'><Ship player /></a-entity>
 <!-- <a-entity controls='hand:right'><Ship player /></a-entity> -->
 <Bullets />

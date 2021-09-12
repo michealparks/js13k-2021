@@ -5,9 +5,10 @@ import Controls from './lib/Controls.svelte'
 import EnterVr from './lib/EnterVR.svelte'
 import Stars from './lib/Stars.svelte'
 import Debris from './lib/Debris.svelte'
-import { FAR } from './lib/constants'
+import GameOver from './lib/GameOver.svelte'
+import { FAR, ENTER } from './lib/constants'
 import { song } from './lib/song'
-import { initSong, generateSong, createWave } from './lib/player'
+import { initSong, generateSong, createWave } from './lib/soundbox'
 
 initSong(song)
 
@@ -23,15 +24,15 @@ const id = setInterval(() => {
 onclick = () => audio.play()
 
 const renderer = 'antialias:true;highRefreshRate:true;foveationLevel:3;alpha:false;'
-const ui = 'enterVRButton:#enter;'
 const fog = `type:linear;color:#000;far:${FAR};near:0`
 
 </script>
-<a-scene scene stats inspector renderer='{renderer}' vr-mode-ui='{ui}' fog='{fog}'>
+<a-scene scene stats inspector {fog} {renderer} vr-mode-ui='enterVRButton:#{ENTER};'>
   <Assets />
   <Controls />
   <Stars />
   <Debris />
+  <GameOver />
 </a-scene>
 <EnterVr />
 <audio loop bind:this={audio} />

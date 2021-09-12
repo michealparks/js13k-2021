@@ -1,5 +1,5 @@
 <script context='module' lang='ts'>
-import Ship from './Ship.svelte';
+import Ship from './Ship.svelte'
 import { register } from './util'
 
 const numEnemies = 20

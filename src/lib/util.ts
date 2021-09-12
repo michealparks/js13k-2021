@@ -1,5 +1,7 @@
 import { ASSETS, MESH, SCENE } from './constants'
-import type { Entity, Component } from 'aframe'
+import type { Entity, Component, THREE } from 'aframe'
+import vertexShader from './shaders/vert.glsl'
+import fragmentShader from './shaders/point.frag.glsl'
 
 const textureLoader = new THREE.TextureLoader()
 
@@ -25,6 +27,15 @@ export const createPoints = (
   vertices = new Float32Array(count * 3),
 ): [THREE.Points, THREE.BufferAttribute] => {
   const geometry = new THREE.BufferGeometry()
+  // const material = new THREE.ShaderMaterial({
+  //   uniforms: {
+  //     size: { value: 30 },
+  //   },
+  //   vertexShader,
+  //   fragmentShader,
+  //   transparent: true,
+  // })
+
   const material = new THREE.PointsMaterial({
     size,
     color,
@@ -60,11 +71,14 @@ export const on = (event: string, fn: any, root = SCENE): void =>
 export const ready = (fn: any) =>
   addEventListener('load', fn)
 
-export const getMesh = (obj): THREE.Mesh =>
-  obj.el ? obj.el.getObject3D(MESH) : obj.getObject3D(MESH)
+const _mesh = (obj) => obj.getObject3D(MESH)
 
-export const setMesh = ({ el }: Component, mesh: THREE.Object3D): void => {
-  el.setObject3D(MESH, mesh)
+export const getMesh = (obj, child?: number): THREE.Mesh =>
+  child !== undefined ? _mesh(obj.el ?? obj).children[child] : _mesh(obj.el ?? obj)
+
+export const setMesh = (obj: Component & { mesh: THREE.Object3D }, mesh: THREE.Object3D): void => {
+  obj.el.setObject3D(MESH, mesh)
+  obj.mesh = mesh
 }
 
 export const setXYZ = (attr: THREE.BufferAttribute, i: number, x: number, y: number, z: number): void => {
@@ -78,7 +92,7 @@ export const needsUpdate = (prop: THREE.BufferAttribute): void => {
 export const float32Array = (arg: number): Float32Array =>
   new Float32Array(arg)
 
-export const createOBB = () =>
+export const createOBB = (): OBB =>
   new THREE.OBB()
 
 export const addOBB = (mesh: THREE.Mesh) => {
