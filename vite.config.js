@@ -4,6 +4,7 @@ import vitePluginString from 'vite-plugin-string'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  publicDir: 'assets',
   server: {
     https: true,
     fs: {
@@ -12,12 +13,24 @@ export default defineConfig({
     }
   },
   plugins: [
-    svelte(),
+    svelte({
+      compilerOptions: {
+        cssHash: ({ hash, css }) => 'a'
+      }
+    }),
     vitePluginString.default({
       exclude: 'node_modules/**',
     }),
   ],
   build: {
+    target: 'esnext',
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+        manualChunks: undefined
+      }
+    },
     terserOptions: {
       ecma: '2021',
       parse: {
@@ -25,7 +38,7 @@ export default defineConfig({
       },
       compress: {
         arguments: true,
-        booleans_as_integers: true, // !
+      //   booleans_as_integers: true, // !
         drop_console: true,
         keep_fargs: false, // !
         keep_infinity: true,

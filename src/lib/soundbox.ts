@@ -297,12 +297,12 @@ export let createWave = () => {
   // Append actual wave data
   for (idx = headerLen; i < mNumWords; ++i) {
       // Note: We clamp here
-      y = mMixBuf[i];
-      y = y < -32767 ? -32767 : (y > 32767 ? 32767 : y);
-      wave[idx++] = y & 255;
-      wave[idx++] = (y >> 8) & 255;
+      y = mMixBuf[i]
+      y = y < -32767 ? -32767 : (y > 32767 ? 32767 : y)
+      wave[idx++] = y & 255
+      wave[idx++] = (y >> 8) & 255
   }
 
   // Return the WAVE formatted typed array
-  return wave;
+  return wave
 }

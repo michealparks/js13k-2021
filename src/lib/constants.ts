@@ -1,12 +1,11 @@
-export const ASSETS = './assets/'
-export const MESH = 'mesh'
 
-export const SPRITE_CIRCLE = 'circle'
+export let MESH = 'mesh'
+export let SPRITE_CIRCLE = 'circle'
 
-export const SHIP_OBJ = 'shipObj'
-export const SHIP_MTL = 'shipMtl'
+export let SHIP_OBJ = 'x'
+export let SHIP_MTL = 'y'
 
-export const CONTROLS_LIST = [
+export let CONTROLS_LIST = [
   'vive',
   'oculus-touch',
   'daydream',
@@ -14,26 +13,16 @@ export const CONTROLS_LIST = [
   'windows-motion',
 ]
 
-export const WHITE = '#fff'
-export const PURPLE = '#ba68c8'
+export let WHITE = '#fff'
+export let PURPLE = '#ba68c8'
 
-export const FAR = 150
+export let FAR = 150
 
-export const ENTER = 'enter'
-export const ENTER_CLASSIC = 'classic'
+export let BULLETS = 'bullets'
 
-export const PLAYER = 'player'
-export const SCENE = 'scene'
-export const BULLETS = 'bullets'
-
-export const enum Events {
-  FIRE = '1',
-  FIRE_END = '2',
-  MODEL_LOADED = 'model-loaded'
-}
-
-export const enum Components {
-  PLAYER = '1',
-  SCENE = '2',
-  BULLETS = '3'
-}
+export let EVENT_FIRE = 'a'
+export let EVENT_FIRE_END = 'b'
+export let EVENT_PLAYER_SCORE = 'c'
+export let EVENT_PLAYER_DAMAGE = 'd'
+export let EVENT_SHIP_LOADED = 'e'
+export let EVENT_MODEL_LOADED = 'model-loaded'

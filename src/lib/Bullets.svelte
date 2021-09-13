@@ -1,31 +1,30 @@
 <script context='module' lang='ts'>
 
-import { Events, FAR, PURPLE, SPRITE_CIRCLE, BULLETS } from './constants'
-import { createPoints, float32Array, needsUpdate, on, register, setMesh, setXYZ } from './util'
+import { EVENT_FIRE, FAR, PURPLE, SPRITE_CIRCLE, BULLETS, EVENT_FIRE_END } from './constants'
+import { createPoints, float32Array, needsUpdate, on, register, setMesh, setXYZ, v3 } from './util'
 
-const FIRE_LIMIT_RATE = 300
-const FIRE_OFFSET = 0.1
-const SPRITE_SIZE = 0.1
-const COUNT = 500
-const SPEED = 0.1
-const vector = new THREE.Vector3()
-const [points, positionAttr] = createPoints(COUNT, SPRITE_SIZE, SPRITE_CIRCLE, PURPLE)
-const velocities = float32Array(COUNT * 3)
-const awake = new Set<number>()
-
+let FIRE_LIMIT_RATE = 300
+let FIRE_OFFSET = 0.1
+let SPRITE_SIZE = 0.1
+let COUNT = 500
+let SPEED = 0.1
+let vector = v3()
+let [points, positionAttr] = createPoints(COUNT, SPRITE_SIZE, SPRITE_CIRCLE, PURPLE)
+let velocities = float32Array(COUNT * 3)
+let awake = new Set<number>()
 let index = 0, fireOffset = 0, lastTime = 0
 let i = 0, j = 0, x = 0, y = 0, z = 0
-let source = null
+let source
 
 register(BULLETS, {
   init () {
     setMesh(this, points)
 
-    on(Events.FIRE, (e) => {
+    on(EVENT_FIRE, (e) => {
       source = e.detail
     })
 
-    on(Events.FIRE_END, () => {
+    on(EVENT_FIRE_END, () => {
       source = null
     })
 
@@ -35,7 +34,7 @@ register(BULLETS, {
     }
   },
 
-  tick (time) {
+  tick (time: number) {
     if (source && time - lastTime > FIRE_LIMIT_RATE) {
       vector.set(0, 0, -1).applyQuaternion(source.quaternion).normalize()
 
@@ -45,7 +44,7 @@ register(BULLETS, {
       velocities[i + 1] = vector.y * SPEED
       velocities[i + 2] = vector.z * SPEED
 
-      const { x, y, z } = source.position
+      let { x, y, z } = source.position
       setXYZ(positionAttr, index, x + fireOffset, y, z)
 
       
@@ -76,15 +75,15 @@ register(BULLETS, {
     needsUpdate(positionAttr)
   },
 
-  getPositions () {
+  positions () {
     return positionAttr.array
   },
 
-  getAwake () {
+  awake () {
     return awake
   },
 
-  removeAwake (i: number) {
+  sleep (i: number): void {
     awake.delete(i)
     setXYZ(positionAttr, i, FAR, FAR, FAR)
   },

@@ -5,7 +5,7 @@
 // use it in a demo.
 
 // Song data
-export const song = {
+export let song = {
   songData: [
     { // Instrument 0
       i: [

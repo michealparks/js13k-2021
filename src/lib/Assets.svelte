@@ -1,16 +1,16 @@
 <script lang='ts'>
 
-import { ASSETS, SHIP_MTL, SHIP_OBJ } from './constants'
+import { SHIP_MTL, SHIP_OBJ } from './constants'
 
-const assets = [
-  [SHIP_OBJ, 'ship.obj'],
-  [SHIP_MTL, 'ship.mtl']
+let assets = [
+  [SHIP_OBJ, './ship.obj'],
+  [SHIP_MTL, './ship.mtl']
 ]
 
 </script>
 
 <a-assets>
   {#each assets as [id, file] (id)}
-    <a-asset-item {id} src='{ASSETS}{file}' />
+    <a-asset-item {id} src={file} />
   {/each}
 </a-assets>

@@ -1,49 +1,48 @@
 <script lang='ts'>
 import { onMount } from 'svelte'
-import { FAR, BULLETS, Events } from './constants'
-import { getMesh, on, random, randPointInCircle, register, each, abs, emit, float32Array, needsUpdate, queryAttr, randFloat, setMesh } from './util'
+import { FAR, BULLETS, EVENT_PLAYER_SCORE, EVENT_SHIP_LOADED } from './constants'
+import { getMesh, on, random, randPointInCircle, register, abs, emit, float32Array, needsUpdate, queryAttr, randFloat, setMesh, v3 } from './util'
 
 let playerComponent
-let player = null
-let bullets = null
+let player
+let bullets
 let score = 0
 
 onMount(() => {
   bullets = queryAttr(BULLETS).components.bullets
 
-  on('enter-vr', () => {
-    leakDebris(0)
-  })
+  on('enter-vr', () => leakDebris(0))
 
-  on(Events.MODEL_LOADED, (e) => {
+  on(EVENT_SHIP_LOADED, (e: any) => {
     playerComponent = e.target.components.ship
     player = getMesh(playerComponent, 0)
   })
 })
 
-const poolSize = 600
-const numDebris = 150
-const baseRadius = 0.4
 
-const sphere = new THREE.Sphere()
-const box = new THREE.Box3()
+let poolSize = 600
+let numDebris = 150
+let baseRadius = 0.4
 
-const dummy = new THREE.Object3D()
-const v3 = new THREE.Vector3()
-const positions = float32Array(poolSize * 3)
-const velocities = float32Array(poolSize * 3)
-const rotations = float32Array(poolSize * 3)
-const angularVelocities = float32Array(poolSize * 3)
-const radii = float32Array(poolSize)
-const geometry = new THREE.IcosahedronGeometry(baseRadius)
-const material = new THREE.MeshStandardMaterial({ color: '#FF926B' })
-const mesh = new THREE.InstancedMesh(geometry, material, poolSize)
+let sphere = new THREE.Sphere()
+let box = new THREE.Box3()
+let v = v3()
+let dummy = new THREE.Object3D()
+let positions = float32Array(poolSize * 3)
+let velocities = float32Array(poolSize * 3)
+let rotations = float32Array(poolSize * 3)
+let angularVelocities = float32Array(poolSize * 3)
+let radii = float32Array(poolSize)
+let geometry = new THREE.IcosahedronGeometry(baseRadius)
+let material = new THREE.MeshStandardMaterial({ color: '#FF926B' })
+let mesh = new THREE.InstancedMesh(geometry, material, poolSize)
 
 let currentFragmentIndex = numDebris
 let playerDead = false
+let i, j, stride
 
-const setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
-  const stride = i * 3
+let setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
+  let stride = i * 3
 
   radii[i] = r
 
@@ -56,8 +55,8 @@ const setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
   positions[stride + 2] = z
 }
 
-const setVelocity = (i: number, vx: number, vy: number, vz: number) => {
-  const stride = i * 3
+let setVelocity = (i: number, vx: number, vy: number, vz: number) => {
+  let stride = i * 3
   velocities[stride + 0] = vx
   velocities[stride + 1] = vy
   velocities[stride + 2] = vz
@@ -67,27 +66,32 @@ const setVelocity = (i: number, vx: number, vy: number, vz: number) => {
   angularVelocities[stride + 2] = random(0.01)
 }
 
-const resetPosition = (index: number): void => {
-  const [x, y] = randPointInCircle(2)
-  setTransform(index, baseRadius + random(1), x, y + 1, -FAR - 5)
+let resetPosition = (debrisIndex: number): void => {
+  if (debrisIndex >= numDebris) {
+    setTransform(debrisIndex)
+  } else {
+    let [x, y] = randPointInCircle(2)
+    setTransform(debrisIndex, baseRadius + random(1), x, y + 1, -FAR - 5)
+  }
 }
 
-const explode = (entity, debrisIndex: number, x: number, y: number, z: number) => {
-  const isFragment = debrisIndex >= numDebris
+let explode = (entity, debrisIndex: number, x: number, y: number, z: number) => {
+  let isFragment = debrisIndex >= numDebris
 
   if (isFragment) {
     score += 3
-    emit(entity, 'player-score', score)
+    emit(entity, EVENT_PLAYER_SCORE, score)
     setTransform(debrisIndex)
     return
   }
 
   score += 1
-  emit(entity, 'player-score', score)
+  emit(entity, EVENT_PLAYER_SCORE, score)
   resetPosition(debrisIndex)
   setVelocity(debrisIndex, 0, 0, 0.05 + random(0.1))
 
-  each(10, () => {
+  j = 0
+  while (j < 10) {
     setTransform(currentFragmentIndex, baseRadius / 1.5, x, y, z)
     setVelocity(currentFragmentIndex, randFloat(-0.02, 0.02), randFloat(-0.02, 0.02), randFloat(0.05, 0.1))
 
@@ -96,34 +100,38 @@ const explode = (entity, debrisIndex: number, x: number, y: number, z: number) =
     if (currentFragmentIndex === poolSize - 1) {
       currentFragmentIndex = numDebris
     }
-  })
+    j++
+  }
 }
 
-const at = (arr: Float32Array, i: number): [x: number, y: number, z: number] => {
-  return [arr[i], arr[i + 1], arr[i + 2]]
-}
+let at = (arr: Float32Array, i: number): [x: number, y: number, z: number] =>
+  [arr[i], arr[i + 1], arr[i + 2]]
 
-const updateArr = (i: number, arr: Float32Array, updates: Float32Array) => {
+let updateArr = (i: number, arr: Float32Array, updates: Float32Array) => {
   arr[i + 0] += updates[i + 0]
   arr[i + 1] += updates[i + 1]
   arr[i + 2] += updates[i + 2]
 }
 
-const calculateDamage = (debrisIndex: number) => {
-  return debrisIndex > numDebris ? 0.1 : 1
-}
+let calculateDamage = (debrisIndex: number) =>
+  debrisIndex > numDebris ? 0.1 : 1
 
-const leakDebris = (i) => {
-  if (i >= numDebris) return
-  setVelocity(i, 0, 0, 0.05 + random(0.1))
-  setTimeout(leakDebris, 300, i + 1)
+let leakDebris = (i) => {
+  if (i < numDebris) {
+    setVelocity(i, 0, 0, 0.05 + random(0.1))
+    setTimeout(leakDebris, 300, i + 1)
+  }
 }
 
 register('debris', {
 
   init () {
     setMesh(this, mesh)
-    each(poolSize, i => resetPosition(i))
+    i = 0
+    while (i < poolSize) {
+      resetPosition(i)
+      i++
+    }
   },
 
   tick () {
@@ -131,53 +139,54 @@ register('debris', {
 
     box.setFromObject(player)
 
-    each(poolSize, (debrisIndex) => {
-      const stride = debrisIndex * 3
+    i = 0
+    while (i < poolSize) {
+      stride = i * 3
       updateArr(stride, positions, velocities)
       updateArr(stride, rotations, angularVelocities)
-
-      const r = radii[debrisIndex]
-      const [x, y, z] = at(positions, stride)
+      let r = radii[i]
+      let [x, y, z] = at(positions, stride)
 
       if (z > FAR) {
-        resetPosition(debrisIndex)
+        resetPosition(i)
+        i++
+        continue
       }
 
-      dummy.scale.setScalar(r)
+      dummy.scale.set(r, r, r)
       dummy.position.set(x, y, z)
-
-      dummy.rotation.x = rotations[stride]
-      dummy.rotation.y = rotations[stride + 1]
-      dummy.rotation.z = rotations[stride + 2]
+      dummy.rotation.set(rotations[stride], rotations[stride + 1], rotations[stride + 2])
       dummy.updateMatrix()
-      mesh.setMatrixAt(debrisIndex, dummy.matrix)
+      mesh.setMatrixAt(i, dummy.matrix)
 
-      if (playerDead) {
-        return
-      }
+      if (!playerDead) {
+        sphere.set(dummy.position, baseRadius)
 
-      sphere.set(dummy.position, baseRadius)
-
-      if (box.intersectsSphere(sphere)) {
-        explode(this, debrisIndex, x, y, z)
-        playerDead = playerComponent.damage(calculateDamage(debrisIndex)) <= 0
-      }
-
-      const bulletPositions = bullets.getPositions()
-
-      for (const awakeIndex of bullets.getAwake()) {
-        v3.set(...at(bulletPositions, awakeIndex * 3))
-
-        if (sphere.containsPoint(v3)) {
-          explode(this, debrisIndex, x, y, z)
-          bullets.removeAwake(awakeIndex)
+        if (box.intersectsSphere(sphere)) {
+          explode(this, i, x, y, z)
+          playerDead = playerComponent.damage(calculateDamage(i)) <= 0
         }
 
-        if (abs(v3.x) > FAR && abs(v3.y) > FAR && abs(v3.z) > FAR) {
-          bullets.removeAwake(awakeIndex)
+        let bulletPositions = bullets.positions()
+
+        for (let awakeIndex of bullets.awake()) {
+          let [bx, by, bz] = at(bulletPositions, awakeIndex * 3)
+          v.set(bx, by, bz)
+
+          if (sphere.containsPoint(v)) {
+            explode(this, i, bx, by, bz)
+            bullets.sleep(awakeIndex)
+          }
+
+          let max = FAR / 6
+          if (abs(bx) > max || abs(by) > max || abs(bz) > max) {
+            bullets.sleep(awakeIndex)
+          }
         }
       }
-    })
+
+      i++
+    }
 
     needsUpdate(mesh.instanceMatrix)
   }

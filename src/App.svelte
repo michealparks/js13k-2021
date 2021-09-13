@@ -6,28 +6,43 @@ import EnterVr from './lib/EnterVR.svelte'
 import Stars from './lib/Stars.svelte'
 import Debris from './lib/Debris.svelte'
 import Bullets from './lib/Bullets.svelte'
-import { FAR, ENTER } from './lib/constants'
+import { FAR } from './lib/constants'
 import { song } from './lib/song'
 import { initSong, generateSong, createWave } from './lib/soundbox'
+import { onMount } from 'svelte';
 
 initSong(song)
 
 let audio: HTMLAudioElement
 
-// const id = setInterval(() => {
-//   if (generateSong() >= 1) {
-//     audio.src = URL.createObjectURL(new Blob([createWave()], { type: 'audio/wav' }))
-//     clearInterval(id)
-//   }
-// })
+let id = setInterval(() => {
+  if (generateSong() >= 1) {
+    audio.src = URL.createObjectURL(new Blob([createWave()], { type: 'audio/wav' }))
+    clearInterval(id)
+  }
+})
 
-// onclick = () => audio.play()
+onclick = () => audio.play()
 
-const renderer = 'antialias:true;highRefreshRate:true;foveationLevel:3;alpha:false;'
-const fog = `type:linear;color:#000;far:${FAR};near:0`
+let renderer = 'antialias:true;highRefreshRate:true;foveationLevel:3;alpha:false;'
+let fog = `type:linear;color:#000;far:${FAR};near:0`
+
+if (import.meta.env.DEV) {
+  onMount(() => {
+    const scene = document.querySelector('a-scene')
+    scene.setAttribute('stats', true)
+    scene.setAttribute('inspector', true)
+  })
+}
 
 </script>
-<a-scene scene stats inspector {fog} {renderer} vr-mode-ui='enterVRButton:#{ENTER};'>
+<a-scene
+  id='a'
+  scene
+  {fog}
+  {renderer}
+  vr-mode-ui='enterVRButton:#c;'
+>
   <Assets />
   <Controls />
   <Bullets />
@@ -36,3 +51,7 @@ const fog = `type:linear;color:#000;far:${FAR};near:0`
 </a-scene>
 <EnterVr />
 <audio loop bind:this={audio} />
+
+<style>
+  #a { position: absolute; }
+</style>
