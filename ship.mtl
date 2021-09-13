@@ -7,7 +7,7 @@ Ke 0 0 0
 Ni 1.5
 d 1
 illum 2
-newmtl Cockpit_Skeleton
+newmtl Cockpit
 Ns 10.3
 Ka 1 1 1
 Kd 0.6 0.6 0.6
