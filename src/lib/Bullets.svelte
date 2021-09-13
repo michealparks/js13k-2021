@@ -22,7 +22,7 @@ register(BULLETS, {
     setMesh(this, points)
 
     on(Events.FIRE, (e) => {
-      source = e.srcElement.object3D
+      source = e.detail
     })
 
     on(Events.FIRE_END, () => {

@@ -2,12 +2,13 @@
 import { onMount } from 'svelte'
 import Ship from './Ship.svelte'
 import { Events, CONTROLS_LIST } from './constants'
-import { register, emit, on } from './util'
+import { register, emit, on, getMesh } from './util'
 
 const boxSize = 0.1
 
 let LEFT = 'left'
 let CONTROLS = 'controls'
+let mesh: THREE.Mesh
 let position = new THREE.Vector3()
 let health = 1 * boxSize
 let text = 'Health'
@@ -16,18 +17,11 @@ let score = 0
 register(CONTROLS, {
 	update () {
 		const { hand } = this.data
-		const offset = 90
-
 		for (const ctr of CONTROLS_LIST) {
 			this.el.setAttribute(`${ctr}-${CONTROLS}`, {
 				hand,
 				model: false,
-				orientationOffset: {
-					x: 0,
-					y: 0,
-					z: 0
-					// z: hand === LEFT ? offset : -offset
-				}
+				orientationOffset: { x: 0, y: 0, z: 0 }
 			})
 		}
 	}
@@ -36,7 +30,7 @@ register(CONTROLS, {
 register('ship-controls', {
 	events: {
 		triggerdown () {
-			emit(this, Events.FIRE)
+			emit(this, Events.FIRE, mesh)
 		},
 		triggerup () {
 			emit(this, Events.FIRE_END)
@@ -49,6 +43,10 @@ register('ship-controls', {
 })
 
 onMount(() => {
+	on(Events.MODEL_LOADED, (e) => {
+    mesh = getMesh(e.target.components.ship, 0)
+  })
+
 	on('player-damage', ({ detail }) => {
 		health = (detail / 10) * boxSize
 

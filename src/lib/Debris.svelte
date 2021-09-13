@@ -1,14 +1,19 @@
-<script context='module' lang='ts'>
+<script lang='ts'>
+import { onMount } from 'svelte'
+import { FAR, BULLETS, Events } from './constants'
+import { getMesh, on, random, randPointInCircle, register, each, abs, emit, float32Array, needsUpdate, queryAttr, randFloat, setMesh } from './util'
 
-import { abs, float32Array, needsUpdate, queryAttr, randomFloatInRange, ready, setMesh } from './util'
-import { Events } from './constants'
-
-let playerComponent = null
+let playerComponent
 let player = null
 let bullets = null
+let score = 0
 
-ready(() => {
+onMount(() => {
   bullets = queryAttr(BULLETS).components.bullets
+
+  on('enter-vr', () => {
+    leakDebris(0)
+  })
 
   on(Events.MODEL_LOADED, (e) => {
     playerComponent = e.target.components.ship
@@ -16,17 +21,8 @@ ready(() => {
   })
 })
 
-</script>
-
-<script lang='ts'>
-
-import { FAR, BULLETS } from './constants'
-import { getMesh, on, random, randPointInCircle, register, each } from './util'
-
-
 const poolSize = 600
 const numDebris = 150
-const numFragments = poolSize - numDebris
 const baseRadius = 0.4
 
 const sphere = new THREE.Sphere()
@@ -61,7 +57,6 @@ const setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
 }
 
 const setVelocity = (i: number, vx: number, vy: number, vz: number) => {
-  console.log(i, vx, vy, vz)
   const stride = i * 3
   velocities[stride + 0] = vx
   velocities[stride + 1] = vy
@@ -77,20 +72,24 @@ const resetPosition = (index: number): void => {
   setTransform(index, baseRadius + random(1), x, y + 1, -FAR - 5)
 }
 
-const explode = (debrisIndex: number, x: number, y: number, z: number) => {
+const explode = (entity, debrisIndex: number, x: number, y: number, z: number) => {
   const isFragment = debrisIndex >= numDebris
 
   if (isFragment) {
+    score += 3
+    emit(entity, 'player-score', score)
     setTransform(debrisIndex)
     return
   }
 
+  score += 1
+  emit(entity, 'player-score', score)
   resetPosition(debrisIndex)
   setVelocity(debrisIndex, 0, 0, 0.05 + random(0.1))
 
   each(10, () => {
     setTransform(currentFragmentIndex, baseRadius / 1.5, x, y, z)
-    setVelocity(currentFragmentIndex, randomFloatInRange(-0.05, 0.05), randomFloatInRange(-0.05, 0.05), randomFloatInRange(0.05, 0.1))
+    setVelocity(currentFragmentIndex, randFloat(-0.02, 0.02), randFloat(-0.02, 0.02), randFloat(0.05, 0.1))
 
     currentFragmentIndex += 1
 
@@ -125,7 +124,6 @@ register('debris', {
   init () {
     setMesh(this, mesh)
     each(poolSize, i => resetPosition(i))
-    leakDebris(0)
   },
 
   tick () {
@@ -161,7 +159,7 @@ register('debris', {
       sphere.set(dummy.position, baseRadius)
 
       if (box.intersectsSphere(sphere)) {
-        explode(debrisIndex, x, y, z)
+        explode(this, debrisIndex, x, y, z)
         playerDead = playerComponent.damage(calculateDamage(debrisIndex)) <= 0
       }
 
@@ -171,7 +169,7 @@ register('debris', {
         v3.set(...at(bulletPositions, awakeIndex * 3))
 
         if (sphere.containsPoint(v3)) {
-          explode(debrisIndex, x, y, z)
+          explode(this, debrisIndex, x, y, z)
           bullets.removeAwake(awakeIndex)
         }
 

@@ -8,9 +8,13 @@ export let enemy = false
 export let player = false
 
 let mesh: THREE.Mesh
+
+let forward = new THREE.Vector3(0, 0, -1)
+let target = new THREE.Vector3()
+let dir = new THREE.Vector3()
+
 let health = 10
 let dead = false
-let target = new THREE.Vector3()
 
 register('ship', {
 	events: {
@@ -37,11 +41,14 @@ register('ship', {
 
 	tick () {
 		if (!mesh) return
-		
+
 		if (dead) {
 			mesh.position.add(target)
 			mesh.rotation.z += 0.1
 		} else {
+			dir.copy(position)
+			dir.sub(mesh.position)
+			mesh.quaternion.setFromUnitVectors(forward, dir)
 			mesh.position.lerp(position, 0.1)
 		}	
 	}

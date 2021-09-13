@@ -1,11 +1,11 @@
 import { ASSETS, MESH, SCENE } from './constants'
-import type { Entity, Component, THREE } from 'aframe'
+import type { Entity, Component } from 'aframe'
 import vertexShader from './shaders/vert.glsl'
 import fragmentShader from './shaders/point.frag.glsl'
 
 const textureLoader = new THREE.TextureLoader()
 
-export const randomFloatInRange = (min: number, max: number) =>
+export const randFloat = (min: number, max: number) =>
   random() * (max - min) + min
 
 export const random = (n = 1): number =>
@@ -70,9 +70,6 @@ export const queryAttr = (attr: string): Entity =>
 
 export const on = (event: string, fn: any, root = SCENE): void =>
   queryAttr(root).addEventListener(event, fn)
-
-export const ready = (fn: any) =>
-  addEventListener('load', fn)
 
 const _mesh = (obj) => obj.getObject3D(MESH)
 
