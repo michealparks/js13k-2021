@@ -1,4 +1,4 @@
-<script context='module' lang='ts'>
+<script lang='ts'>
 
 import { EVENT_FIRE, FAR, PURPLE, SPRITE_CIRCLE, BULLETS, EVENT_FIRE_END } from './constants'
 import { createPoints, float32Array, needsUpdate, on, register, setMesh, setXYZ, v3 } from './util'

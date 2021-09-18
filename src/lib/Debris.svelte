@@ -8,18 +8,6 @@ let player
 let bullets
 let score = 0
 
-onMount(() => {
-  bullets = queryAttr(BULLETS).components.bullets
-
-  on('enter-vr', () => leakDebris(0))
-
-  on(EVENT_SHIP_LOADED, (e: any) => {
-    playerComponent = e.target.components.ship
-    player = getMesh(playerComponent, 0)
-  })
-})
-
-
 let poolSize = 600
 let numDebris = 150
 let baseRadius = 0.4
@@ -38,8 +26,10 @@ let material = new THREE.MeshStandardMaterial({ color: '#FF926B' })
 let mesh = new THREE.InstancedMesh(geometry, material, poolSize)
 
 let currentFragmentIndex = numDebris
-let playerDead = false
-let i, j, stride
+let playerDead: boolean
+let i: number, j: number, stride: number
+let x: number, y: number, z: number, r: number
+
 
 let setTransform = (i: number, r = 0, x = -FAR, y = -FAR, z = -FAR) => {
   let stride = i * 3
@@ -70,7 +60,7 @@ let resetPosition = (debrisIndex: number): void => {
   if (debrisIndex >= numDebris) {
     setTransform(debrisIndex)
   } else {
-    let [x, y] = randPointInCircle(2)
+    [x, y] = randPointInCircle(2)
     setTransform(debrisIndex, baseRadius + random(1), x, y + 1, -FAR - 5)
   }
 }
@@ -116,12 +106,23 @@ let updateArr = (i: number, arr: Float32Array, updates: Float32Array) => {
 let calculateDamage = (debrisIndex: number) =>
   debrisIndex > numDebris ? 0.1 : 1
 
-let leakDebris = (i) => {
+let leakDebris = (i: number) => {
   if (i < numDebris) {
     setVelocity(i, 0, 0, 0.05 + random(0.1))
     setTimeout(leakDebris, 300, i + 1)
   }
 }
+
+onMount(() => {
+  bullets = queryAttr(BULLETS).components.bullets
+
+  on('enter-vr', () => leakDebris(0))
+
+  on(EVENT_SHIP_LOADED, (e: any) => {
+    playerComponent = e.target.components.ship
+    player = getMesh(playerComponent, 0)
+  })
+})
 
 register('debris', {
 
@@ -144,43 +145,43 @@ register('debris', {
       stride = i * 3
       updateArr(stride, positions, velocities)
       updateArr(stride, rotations, angularVelocities)
-      let r = radii[i]
-      let [x, y, z] = at(positions, stride)
+      r = radii[i]; [x, y, z] = at(positions, stride)
 
       if (z > FAR) {
+
         resetPosition(i)
-        i++
-        continue
-      }
 
-      dummy.scale.set(r, r, r)
-      dummy.position.set(x, y, z)
-      dummy.rotation.set(rotations[stride], rotations[stride + 1], rotations[stride + 2])
-      dummy.updateMatrix()
-      mesh.setMatrixAt(i, dummy.matrix)
+      } else {
 
-      if (!playerDead) {
-        sphere.set(dummy.position, baseRadius)
+        dummy.scale.set(r, r, r)
+        dummy.position.set(x, y, z)
+        dummy.rotation.set(rotations[stride], rotations[stride + 1], rotations[stride + 2])
+        dummy.updateMatrix()
+        mesh.setMatrixAt(i, dummy.matrix)
 
-        if (box.intersectsSphere(sphere)) {
-          explode(this, i, x, y, z)
-          playerDead = playerComponent.damage(calculateDamage(i)) <= 0
-        }
+        if (!playerDead) {
+          sphere.set(dummy.position, baseRadius)
 
-        let bulletPositions = bullets.positions()
-
-        for (let awakeIndex of bullets.awake()) {
-          let [bx, by, bz] = at(bulletPositions, awakeIndex * 3)
-          v.set(bx, by, bz)
-
-          if (sphere.containsPoint(v)) {
-            explode(this, i, bx, by, bz)
-            bullets.sleep(awakeIndex)
+          if (box.intersectsSphere(sphere)) {
+            explode(this, i, x, y, z)
+            playerDead = playerComponent.damage(calculateDamage(i)) <= 0
           }
 
-          let max = FAR / 6
-          if (abs(bx) > max || abs(by) > max || abs(bz) > max) {
-            bullets.sleep(awakeIndex)
+          let bulletPositions = bullets.positions()
+
+          for (let awakeIndex of bullets.awake()) {
+            [x, y, z] = at(bulletPositions, awakeIndex * 3)
+            v.set(x, y, z)
+
+            if (sphere.containsPoint(v)) {
+              explode(this, i, x, y, z)
+              bullets.sleep(awakeIndex)
+            }
+
+            r = FAR / 6
+            if (abs(x) > r || abs(y) > r || abs(z) > r) {
+              bullets.sleep(awakeIndex)
+            }
           }
         }
       }

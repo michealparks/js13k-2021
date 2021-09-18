@@ -242,4 +242,4 @@ export let song = {
   patternLen: 32,  // Rows per pattern
   endPattern: 23,  // End pattern
   numChannels: 5  // Number of channels
-};
+}
